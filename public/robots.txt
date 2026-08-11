@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+
+# SEO & AI Language Models (LLMs) Crawlers Optimization
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Sitemap & LLM Knowledge Index Standard
+Sitemap: https://fitbrilliance.store/sitemap.xml
+Sitemap: https://fitbrilliance.store/llms.txt
