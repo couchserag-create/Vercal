@@ -117,15 +117,15 @@ export const ApiDocsView: React.FC = () => {
                   onClick={() => setActiveEndpoint(isExpanded ? null : ep.path)}
                   className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#1a2325] transition-colors gap-4"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                     <span className={`px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold border ${methodColor}`}>
                       {ep.method}
                     </span>
-                    <span className="font-mono text-xs text-[#f4f0e7] font-bold">{ep.path}</span>
+                    <span className="min-w-0 break-all font-mono text-xs text-[#f4f0e7] font-bold">{ep.path}</span>
                     <span className="text-xs text-[#a4aaa7] hidden md:inline">— {ep.summary}</span>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex shrink-0 items-center gap-3">
                     {ep.protected ? (
                       <span className="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
                         <Lock className="w-2.5 h-2.5" /> محمي بـ JWT

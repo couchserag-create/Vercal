@@ -8,7 +8,7 @@ import { useLogger } from '../context/LoggerContext.tsx';
 interface ProjectSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectProject: (project: Project, visitor: { name: string; email: string; company: string }) => void;
+  onSelectProject: (project: Project, visitor: { name: string; email: string; company: string }, accessToken: string) => void;
 }
 
 export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, onClose, onSelectProject }) => {
@@ -26,6 +26,7 @@ export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [accessCode, setAccessCode] = useState('');
 
   if (!isOpen) return null;
 
@@ -42,16 +43,9 @@ export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, 
     logAction('SEARCH', 'بحث عن مشروع', `استعلام: ${searchQuery}`);
 
     try {
-      const res = await axiosClient.get('/api/projects');
-      const projects: Project[] = res.data.projects || [];
-
       const query = searchQuery.trim().toLowerCase();
-      const match = projects.find(
-        p => p.id.toLowerCase() === query ||
-             p.name.toLowerCase().includes(query) ||
-             p.company.toLowerCase().includes(query)
-      );
-
+      const res = await axiosClient.get(`/api/projects/lookup/${encodeURIComponent(query)}`);
+      const match = res.data.project as Project | undefined;
       if (!match) {
         const msg = 'لم يتم العثور على المشروع! يرجى التأكد من اسم المشروع أو الكود السري (مثال: PRJ-101).';
         setErrorMsg(msg);
@@ -108,30 +102,23 @@ export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, 
       finalEmail = `واتساب: ${whatsapp}`;
     }
 
-    // Log Successful Access to Ledger
-    try {
-      await axiosClient.post('/api/ledger', {
-        eventType: '🚀 عبور ناجح لصفحة العرض المحمية',
-        name: fullName || 'زائر مؤكد',
-        email: finalEmail,
-        company: finalCompany,
-        role: role || 'مسؤول',
-        details: `عرض مشروع (${foundProject.id} - ${foundProject.name})`
-      });
-    } catch (e) {
-      console.warn('Ledger log fallback');
+    if (accessCode.trim().length < 32) {
+      showError('أدخل رمز الدخول المرسل لك من الإدارة لفتح التقرير.', 'رمز الدخول مطلوب');
+      return;
     }
 
-    showSuccess(`تم تأكيد وصولك إلى التقرير (${foundProject.name}) بنجاح.`, 'دخول التقرير');
-    logAction('SEARCH', 'عبور ناجح لتقرير محمي', `زائر: ${fullName} | مشروع: ${foundProject.name}`);
-
-    onSelectProject(foundProject, {
-      name: fullName || 'زائر مؤكد',
-      email: finalEmail,
-      company: finalCompany
-    });
-
-    onClose();
+    try {
+      const accessResponse = await axiosClient.post(`/api/projects/${foundProject.id}/access`, { accessCode: accessCode.trim() });
+      const accessToken = accessResponse.data.token as string | undefined;
+      if (!accessToken) throw new Error('Missing access token');
+      showSuccess(`تم تأكيد وصولك إلى التقرير (${foundProject.name}) بنجاح.`, 'دخول التقرير');
+      logAction('SEARCH', 'عبور ناجح لتقرير محمي', `زائر: ${fullName} | مشروع: ${foundProject.name}`);
+      onSelectProject(foundProject, { name: fullName || 'زائر مؤكد', email: finalEmail, company: finalCompany }, accessToken);
+      onClose();
+    } catch (e) {
+      showError('رمز الدخول غير صحيح أو انتهت صلاحية المحاولة.', 'تعذر فتح التقرير');
+      return;
+    }
   };
 
 
@@ -144,11 +131,12 @@ export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, 
     setEmail('');
     setRole('');
     setWhatsapp('');
+    setAccessCode('');
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#090d0e]/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#121819] border border-[#222d2b] w-full max-w-lg rounded-2xl p-6 md:p-8 relative shadow-2xl animate-fade-in text-right">
+    <div className="fixed inset-0 z-50 bg-[#090d0e]/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-[#121819] border border-[#222d2b] w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl p-5 sm:p-6 md:p-8 relative shadow-2xl animate-fade-in text-right">
         
         <button
           onClick={() => { resetModal(); onClose(); }}
@@ -250,7 +238,21 @@ export const ProjectSearchModal: React.FC<ProjectSearchModalProps> = ({ isOpen, 
               </label>
             )}
 
-            <div className="flex gap-3 mt-2">
+            <label className="text-xs font-bold text-[#f4f0e7] flex flex-col gap-1.5">
+              رمز الدخول الخاص بالتقرير
+              <input
+                type="password"
+                required
+                minLength={32}
+                autoComplete="one-time-code"
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+                placeholder="أدخله كما وصلك من الإدارة"
+                className="bg-[#090d0e] border border-[#222d2b] focus:border-[#d99c43] rounded-xl px-4 py-2.5 text-xs text-[#f4f0e7] outline-none"
+              />
+            </label>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2">
               <button
                 type="submit"
                 className="flex-1 bg-[#d99c43] hover:bg-[#b88232] text-[#0b0c10] font-black py-2.5 rounded-xl transition-colors text-xs shadow-md shadow-[#d99c43]/20"

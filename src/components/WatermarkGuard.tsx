@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ShieldCheck, Lock, AlertOctagon, Copy } from 'lucide-react';
 import { useToast } from '../context/ToastContext.tsx';
 import { useLogger } from '../context/LoggerContext.tsx';
@@ -19,6 +19,12 @@ export const WatermarkGuard: React.FC<WatermarkGuardProps> = ({
 
   const [currentTime, setCurrentTime] = useState<string>('');
   const [securityBadge, setSecurityBadge] = useState(true);
+  const [captureWarning, setCaptureWarning] = useState(false);
+  const sessionId = useRef(
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().slice(0, 8).toUpperCase()
+      : Math.random().toString(36).slice(2, 10).toUpperCase()
+  );
 
   // Live Timestamp Clock
   useEffect(() => {
@@ -56,6 +62,17 @@ export const WatermarkGuard: React.FC<WatermarkGuardProps> = ({
         showError('تم حظر فتح أدوات المطورين (F12) لحماية التقارير والخطة الفنية من الهندسة العكسية.', 'أمان الخطة محمي');
         logAction('SYSTEM', 'محاولة فتح DevTools عبر F12', `الاسم: ${visitor.name}`);
         return false;
+      }
+
+      // The operating system ultimately controls screenshots. This does not
+      // block them, but immediately records the attempt and makes the dynamic
+      // identity watermark prominent in any subsequent capture.
+      if (e.key === 'PrintScreen') {
+        setCaptureWarning(true);
+        window.setTimeout(() => setCaptureWarning(false), 4000);
+        showWarning('تم رصد اختصار التقاط الشاشة. هذه الوثيقة تحمل ختم هوية وتوقيت متغيرين.', 'تنبيه حماية المحتوى');
+        logAction('SYSTEM', 'محاولة التقاط شاشة عبر Print Screen', `المستخدم: ${visitor.name}`);
+        return;
       }
 
       // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (DevTools)
@@ -144,18 +161,29 @@ export const WatermarkGuard: React.FC<WatermarkGuardProps> = ({
       logAction('SYSTEM', 'إحباط عملية النسخ ومسح الحافظة');
     };
 
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      e.preventDefault();
+      logAction('SYSTEM', 'محاولة سحب محتوى من المستند', `المستخدم: ${visitor.name}`);
+    };
+
     window.addEventListener('keydown', handleKeyDown, true);
     window.addEventListener('contextmenu', handleContextMenu, true);
     window.addEventListener('copy', handleCopy, true);
+    window.addEventListener('cut', handleCopy, true);
+    window.addEventListener('dragstart', handleDragStart, true);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
       window.removeEventListener('contextmenu', handleContextMenu, true);
       window.removeEventListener('copy', handleCopy, true);
+      window.removeEventListener('cut', handleCopy, true);
+      window.removeEventListener('dragstart', handleDragStart, true);
     };
   }, [enableProtection, showError, showWarning, logAction, visitor.name]);
 
-  const watermarkText = `🔒 وثيقة محمية موثقة | العارض: ${visitor.name || 'زائر موثق'} (${visitor.company || 'مؤسسة معتمدة'}) | ${visitor.email || ''} | التوقيت: ${currentTime} | يمنع التصوير والتداول`;
+  const watermarkText = `🔒 وثيقة محمية | العارض: ${visitor.name || 'زائر موثق'} (${visitor.company || 'مؤسسة معتمدة'}) | ${visitor.email || ''} | جلسة: ${sessionId.current} | ${currentTime} | يمنع التصوير والتداول`;
 
   return (
     <>
@@ -165,6 +193,11 @@ export const WatermarkGuard: React.FC<WatermarkGuardProps> = ({
           html, body {
             display: none !important;
             visibility: hidden !important;
+          }
+
+          #anti-leak-watermark-overlay {
+            display: flex !important;
+            opacity: 0.55 !important;
           }
         }
       `}</style>
@@ -188,6 +221,16 @@ export const WatermarkGuard: React.FC<WatermarkGuardProps> = ({
               {watermarkText}
             </div>
           ))}
+        </div>
+      )}
+
+      {captureWarning && (
+        <div className="fixed inset-0 z-[90] pointer-events-none flex items-center justify-center bg-[#090d0e]/85 backdrop-blur-md p-6 text-center">
+          <div className="max-w-md rounded-2xl border border-[#00e676]/50 bg-[#090d0e] p-6 shadow-2xl">
+            <AlertOctagon className="mx-auto mb-3 h-9 w-9 text-[#00e676]" />
+            <p className="text-sm font-bold text-[#f4f0e7]">المحتوى موثق بختم هوية وتوقيت مباشر</p>
+            <p className="mt-2 text-xs leading-relaxed text-[#a4aaa7]">لا توجد وسيلة ويب تمنع لقطة نظام التشغيل، لكن كل نسخة معروضة تحمل بيانات جلسة المستعرض لردع التداول غير المصرح.</p>
+          </div>
         </div>
       )}
 

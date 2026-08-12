@@ -3,13 +3,14 @@ import path from 'path';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { User, Project, AuditLog, CoachInfo, BackupMetadata } from '../src/types.ts';
+import { securityConfig } from './config.ts';
 
 const DB_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 const BACKUP_DIR = path.join(DB_DIR, 'backups');
 
-const ENCRYPTION_KEY = process.env.DB_ENCRYPTION_KEY || 'fitbrilliance_db_ssl_enc_key_32bytes!';
-const ALGORITHM = 'aes-256-cbc';
+const ENCRYPTION_KEY = securityConfig.dbEncryptionKey;
+const ALGORITHM = 'aes-256-gcm';
 
 // Helper to encrypt strings at rest
 export function encryptData(text: string): string {
@@ -19,7 +20,7 @@ export function encryptData(text: string): string {
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
+    return `v1:${iv.toString('hex')}:${cipher.getAuthTag().toString('hex')}:${encrypted}`;
   } catch (e) {
     return text;
   }
@@ -28,12 +29,14 @@ export function encryptData(text: string): string {
 // Helper to decrypt strings
 export function decryptData(text: string): string {
   try {
-    if (!text.includes(':')) return text;
+    if (!text.startsWith('v1:')) return text;
     const parts = text.split(':');
-    const iv = Buffer.from(parts.shift()!, 'hex');
-    const encryptedText = parts.join(':');
+    const [, ivHex, authTagHex, encryptedText] = parts;
+    if (!ivHex || !authTagHex || !encryptedText) return text;
+    const iv = Buffer.from(ivHex, 'hex');
     const key = crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest();
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
@@ -148,13 +151,13 @@ function loadDB(): DBData {
   ensureDirs();
 
   if (!fs.existsSync(DB_FILE)) {
-    const defaultPasswordHash = bcrypt.hashSync("0020303", 10);
+    const defaultPasswordHash = bcrypt.hashSync(securityConfig.adminPassword, 12);
     const initialData: DBData = {
       users: [
         {
           id: "usr_admin_1",
           name: "Coach Serag",
-          email: "couch.serag@gmail.com",
+          email: securityConfig.adminEmail,
           role: "admin",
           company: "FitBrilliance",
           passwordHash: defaultPasswordHash,
@@ -169,7 +172,7 @@ function loadDB(): DBData {
           timestamp: new Date().toLocaleString('ar-EG'),
           eventType: "⚡ بدء نظام الحماية والتشغيل",
           name: "النظام الإداري",
-          email: "couch.serag@gmail.com",
+          email: securityConfig.adminEmail,
           company: "FitBrilliance",
           role: "المدير النظامي",
           details: "تم إقلاع خادم Node.js المشفر بنجاح مع تفعيل الهيكل والأمن."
@@ -189,9 +192,9 @@ function loadDB(): DBData {
     return dbCache!;
   } catch (err) {
     console.error("Failed to parse db.json, creating clean DB", err);
-    const defaultPasswordHash = bcrypt.hashSync("0020303", 10);
+    const defaultPasswordHash = bcrypt.hashSync(securityConfig.adminPassword, 12);
     const fallback: DBData = {
-      users: [{ id: "usr_admin_1", name: "Coach Serag", email: "couch.serag@gmail.com", role: "admin", company: "FitBrilliance", passwordHash: defaultPasswordHash, is2FAEnabled: false, createdAt: new Date().toISOString() }],
+      users: [{ id: "usr_admin_1", name: "Coach Serag", email: securityConfig.adminEmail, role: "admin", company: "FitBrilliance", passwordHash: defaultPasswordHash, is2FAEnabled: false, createdAt: new Date().toISOString() }],
       projects: DEFAULT_PROJECTS,
       auditLogs: [],
       coachInfo: DEFAULT_COACH_INFO,

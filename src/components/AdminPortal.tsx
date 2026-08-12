@@ -368,7 +368,7 @@ export const AdminPortal: React.FC = () => {
             {/* Budget Month 1 */}
             <div className="p-4 bg-[#090d0e] border-r-2 border-[#d99c43] border-y border-l border-[#222d2b] rounded-xl flex flex-col gap-3">
               <h4 className="text-xs font-bold text-[#d99c43]">الشهر الأول — التأسيس</h4>
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 <input
                   type="number"
                   placeholder="فيديوهات"

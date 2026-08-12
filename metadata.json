@@ -2,5 +2,5 @@
   "name": "FitBrilliance ToDo4U - Secure Web Application",
   "description": "Full-stack React & Node.js Single Page Application with JWT authentication, 2FA security, rate limiting, Helmet HTTP protection, Bcrypt hashing, input validation, and database backup management.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": ["SECURE_PROJECT_VIEWER", "VERCEL_SERVERLESS_API"]
 }

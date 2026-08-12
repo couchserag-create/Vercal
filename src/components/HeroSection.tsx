@@ -139,8 +139,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Side: Video Showcase */}
-        <div className="lg:col-span-7 bg-[#121819] border border-[#222d2b] rounded-2xl overflow-hidden shadow-2xl relative min-h-[420px] flex flex-col justify-between">
-          <div className="p-4 bg-[#090d0e]/90 border-b border-[#222d2b] flex items-center justify-between z-10">
+        <div className="lg:col-span-7 bg-[#121819] border border-[#222d2b] rounded-2xl overflow-hidden shadow-2xl relative min-h-0 sm:min-h-[420px] flex flex-col justify-between">
+          <div className="p-3 sm:p-4 bg-[#090d0e]/90 border-b border-[#222d2b] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 z-10">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#00e676] animate-ping"></span>
               <span className="text-xs font-bold text-[#d99c43] font-mono">
@@ -200,7 +200,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             )}
 
             {isPlaying && (
-              <div className="absolute bottom-3 right-3 left-3 bg-[#090d0e]/80 backdrop-blur-md px-4 py-2 rounded-xl border border-[#222d2b] flex items-center justify-between z-20">
+              <div className="absolute bottom-2 right-2 left-2 sm:bottom-3 sm:right-3 sm:left-3 bg-[#090d0e]/80 backdrop-blur-md px-3 sm:px-4 py-2 rounded-xl border border-[#222d2b] flex items-center justify-between gap-2 z-20">
                 <div className="flex items-center gap-3">
                   <button onClick={togglePlay} className="text-[#d99c43] hover:text-white cursor-pointer">
                     {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}

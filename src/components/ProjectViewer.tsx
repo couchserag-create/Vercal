@@ -2,15 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, FileText, Lock, PieChart, ExternalLink, Film, Image as ImageIcon, Video, Maximize2, CheckCircle2, Award } from 'lucide-react';
 import axiosClient from '../api/axiosClient.ts';
 import { Project } from '../types.ts';
-import { WatermarkGuard } from './WatermarkGuard.tsx';
 
 interface ProjectViewerProps {
   projectId: string;
   visitor: { name: string; email: string; company: string };
+  accessToken: string | null;
   onBack: () => void;
 }
 
-export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor, onBack }) => {
+export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor, accessToken, onBack }) => {
   const [project, setProject] = useState<Project | null>(null);
   const [viewMode, setViewMode] = useState<'both' | 'analysis' | 'plan'>('both');
   const [loading, setLoading] = useState(true);
@@ -69,13 +69,11 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor
     setLoading(true);
     setError(null);
     try {
-      const res = await axiosClient.get(`/api/projects/${projectId}`);
+      const res = await axiosClient.get(`/api/projects/${projectId}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      });
       if (res.data && res.data.project) {
         setProject(res.data.project);
-      } else {
-        const listRes = await axiosClient.get('/api/projects');
-        const list: Project[] = listRes.data.projects || [];
-        setProject(list[0] || null);
       }
     } catch (e: any) {
       setError('فشل استرجاع مشروع العرض المحمي.');
@@ -131,11 +129,8 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor
   return (
     <div className="flex flex-col gap-6 py-4 relative text-right select-none">
       
-      {/* Anti-Leak Dynamic Watermark Protection */}
-      <WatermarkGuard visitor={visitor} enableWatermark={true} enableProtection={true} />
-      
       {/* Security Watermark Banner */}
-      <div className="bg-[#00e676]/10 border border-[#00e676]/30 text-[#00e676] px-4 py-2.5 rounded-xl text-xs font-mono flex items-center justify-between">
+      <div className="bg-[#00e676]/10 border border-[#00e676]/30 text-[#00e676] px-4 py-2.5 rounded-xl text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 font-bold">
           <ShieldCheck className="w-4 h-4 text-[#00e676]" />
           مستند تشغيلي محمي وموثق — JWT + 2FA + تشفير AES-256
@@ -164,7 +159,7 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor
         </div>
 
         {/* View Mode Switcher */}
-        <div className="flex items-center gap-1 bg-[#090d0e] p-1.5 rounded-xl border border-[#222d2b] text-xs font-bold">
+        <div className="flex w-full md:w-auto items-center gap-1 overflow-x-auto bg-[#090d0e] p-1.5 rounded-xl border border-[#222d2b] text-xs font-bold">
           <button
             onClick={() => setViewMode('both')}
             className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${viewMode === 'both' ? 'bg-[#d99c43] text-[#0b0c10] font-black' : 'text-[#a4aaa7] hover:text-[#f4f0e7]'}`}
@@ -402,7 +397,7 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor
 
         {/* Dynamic Canvas Container */}
         <div className="bg-[#090d0e] p-3 rounded-xl border border-[#d99c43]/40 flex flex-col items-center gap-2 shrink-0 shadow-lg">
-          <canvas ref={canvasRef} className="w-[280px] h-[90px] object-contain" />
+          <canvas ref={canvasRef} className="w-full max-w-[280px] h-auto aspect-[28/9] object-contain" />
           <span className="text-[10px] font-mono text-[#d99c43] bg-[#d99c43]/10 px-3 py-0.5 rounded-full border border-[#d99c43]/30">
             VERIFIED ELECTRONIC GOLD SEAL
           </span>
@@ -417,7 +412,7 @@ export const ProjectViewer: React.FC<ProjectViewerProps> = ({ projectId, visitor
           نضمن لك بنهاية العام المالي ستكون 0% تكلفة صافية بإذن الله، و100% هدف محقق مع الريادة الميدانية.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 w-full mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full mt-2">
           <button
             onClick={() => openWhatsApp('consult')}
             className="bg-[#d99c43] hover:bg-[#b88232] text-[#0b0c10] font-black py-2.5 px-4 rounded-xl text-xs transition-colors shadow-md cursor-pointer"

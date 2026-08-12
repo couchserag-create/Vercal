@@ -6,6 +6,7 @@ import qrcode from 'qrcode';
 import { body, validationResult } from 'express-validator';
 import { getUserByEmail, saveUser, getUserById, addAuditLog } from '../db.ts';
 import { signToken, authenticateJWT, AuthRequest } from '../middleware/auth.ts';
+import { securityConfig } from '../config.ts';
 import { authRateLimiter, generateCsrfToken } from '../middleware/security.ts';
 
 const router = express.Router();
@@ -197,8 +198,12 @@ router.post('/verify-2fa', authRateLimiter, async (req: express.Request, res: Re
     return res.status(400).json({ status: 'error', message: 'رمز الدخول المؤقت ورمز التحقق مطلوبان.' });
   }
 
-  const authReq = req as AuthRequest;
-  const decoded = signToken ? jwt.verify(tempToken, process.env.JWT_SECRET || 'fitbrilliance_secure_jwt_secret_2026_key') as any : null;
+  let decoded: any;
+  try {
+    decoded = jwt.verify(tempToken, securityConfig.jwtSecret) as any;
+  } catch {
+    return res.status(401).json({ status: 'error', message: 'رمز الجلسة المؤقتة منتهي الصلاحية.' });
+  }
 
   if (!decoded || !decoded.id) {
     return res.status(401).json({ status: 'error', message: 'رمز الجلسة المؤقتة منتهي الصلاحية.' });

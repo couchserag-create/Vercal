@@ -94,7 +94,7 @@ export const AutoLogoutHandler: React.FC<AutoLogoutHandlerProps> = ({ onAutoLogo
   if (!isAuthenticated || !showWarningBanner) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[90] bg-[#1a120c] border border-[#d99c43]/60 rounded-2xl p-4 shadow-2xl max-w-md w-full text-right flex items-start gap-3 backdrop-blur-md animate-bounce-short">
+    <div className="fixed bottom-3 right-3 left-3 sm:bottom-6 sm:right-6 sm:left-auto z-[90] bg-[#1a120c] border border-[#d99c43]/60 rounded-2xl p-4 shadow-2xl max-w-md w-auto sm:w-full text-right flex items-start gap-3 backdrop-blur-md animate-bounce-short">
       <Clock className="w-6 h-6 text-[#d99c43] shrink-0 mt-0.5 animate-pulse" />
       <div className="flex-1 flex flex-col gap-1">
         <h4 className="text-xs font-bold text-[#f4f0e7] flex items-center gap-1.5">

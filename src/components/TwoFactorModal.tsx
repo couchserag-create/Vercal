@@ -65,8 +65,8 @@ export const TwoFactorModal: React.FC<TwoFactorModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#090d0e]/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#121819] border border-[#222d2b] w-full max-w-md rounded-2xl p-6 relative shadow-2xl text-right">
+    <div className="fixed inset-0 z-50 bg-[#090d0e]/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-[#121819] border border-[#222d2b] w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl p-5 sm:p-6 relative shadow-2xl text-right">
         
         <button
           onClick={onClose}

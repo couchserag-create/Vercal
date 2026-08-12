@@ -30,7 +30,7 @@ const API_DOCUMENTATION: ApiEndpointDoc[] = [
     description: 'التحقق من البريد وكلمة السر المشفرة وإصدار رمز JWT صالحة لمدة 24 ساعة. يدعم التوجيه للتحقق الثنائي 2FA عند التفعيل.',
     protected: false,
     rateLimit: '15 req / 15 min (Auth Limiter)',
-    requestBodyExample: { email: 'couch.serag@gmail.com', password: '0020303' },
+    requestBodyExample: { email: 'owner@example.com', password: 'your-unique-password' },
     responseExample: { status: 'success', token: 'eyJhbGciOiJIUzI1Ni...', user: { email: 'couch.serag@gmail.com', is2FAEnabled: true } }
   },
   {

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
+import { securityConfig } from '../config.ts';
 
 // Rate Limiter for Authentication routes (Brute force protection)
 export const authRateLimiter = rateLimit({
@@ -26,6 +27,15 @@ export const apiRateLimiter = rateLimit({
     status: 'error',
     message: '⛔ تم تجاوز معدل الطلبات المسموح به لخادم البيانات. يرجى التمهل وتكرار الطلب لاحقاً.'
   }
+});
+
+export const projectAccessRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
+  message: { status: 'error', message: '⛔ تم تجاوز عدد محاولات فتح التقرير. يرجى المحاولة لاحقاً.' }
 });
 
 // Sanitize string against XSS & script injection
@@ -59,23 +69,25 @@ export function sanitizeInputs(req: Request, res: Response, next: NextFunction) 
 }
 
 // CSRF Double Submit Token Helper
-const CSRF_SECRET = process.env.CSRF_SECRET || 'fitbrilliance_csrf_token_secret_key_2026';
+const CSRF_SECRET = securityConfig.csrfSecret;
 
 export function generateCsrfToken(): string {
   const timestamp = Date.now().toString();
-  const hmac = crypto.createHmac('sha256', CSRF_SECRET).update(timestamp).digest('hex');
-  return `${timestamp}.${hmac}`;
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const hmac = crypto.createHmac('sha256', CSRF_SECRET).update(`${timestamp}.${nonce}`).digest('hex');
+  return `${timestamp}.${nonce}.${hmac}`;
 }
 
 export function verifyCsrfToken(token: string): boolean {
-  if (!token || !token.includes('.')) return false;
-  const [timestamp, hmac] = token.split('.');
+  if (!token) return false;
+  const [timestamp, nonce, hmac] = token.split('.');
+  if (!timestamp || !nonce || !hmac || !/^[a-f0-9]{32}$/i.test(nonce) || !/^[a-f0-9]{64}$/i.test(hmac)) return false;
   const timeNum = parseInt(timestamp, 10);
   if (isNaN(timeNum) || Date.now() - timeNum > 24 * 60 * 60 * 1000) {
     return false; // expired token after 24h
   }
-  const expectedHmac = crypto.createHmac('sha256', CSRF_SECRET).update(timestamp).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(expectedHmac));
+  const expectedHmac = crypto.createHmac('sha256', CSRF_SECRET).update(`${timestamp}.${nonce}`).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(hmac, 'hex'), Buffer.from(expectedHmac, 'hex'));
 }
 
 // CSRF Verification Middleware for state-changing requests (POST, PUT, DELETE)

@@ -17,6 +17,7 @@ import { AuthModal } from './components/AuthModal.tsx';
 import { TwoFactorModal } from './components/TwoFactorModal.tsx';
 import { Footer } from './components/Footer.tsx';
 import { Project } from './types.ts';
+import { useAuth } from './context/AuthContext.tsx';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<string>('home');
@@ -25,9 +26,11 @@ function AppContent() {
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
 
   const { logAction } = useLogger();
+  const { user } = useAuth();
 
   // Selected Project for Viewer
   const [selectedProjectId, setSelectedProjectId] = useState<string>('PRJ-101');
+  const [projectAccessToken, setProjectAccessToken] = useState<string | null>(null);
   const [visitorInfo, setVisitorInfo] = useState<{ name: string; email: string; company: string }>({
     name: 'زائر مؤكد',
     email: 'client@company.com',
@@ -35,6 +38,9 @@ function AppContent() {
   });
 
   const [isObscured, setIsObscured] = useState(false);
+  const watermarkVisitor = user
+    ? { name: user.name, email: user.email, company: user.company || 'FitBrilliance' }
+    : visitorInfo;
 
   // Clear clipboard immediately upon copy attempt
   useEffect(() => {
@@ -96,9 +102,10 @@ function AppContent() {
     logAction('NAVIGATION', 'تنقل بين الصفحات', `الانتقال إلى تبويب: ${tabNames[tab] || tab}`);
   };
 
-  const handleSelectProject = (project: Project, visitor: { name: string; email: string; company: string }) => {
+  const handleSelectProject = (project: Project, visitor: { name: string; email: string; company: string }, accessToken: string) => {
     setSelectedProjectId(project.id);
     setVisitorInfo(visitor);
+    setProjectAccessToken(accessToken);
     setActiveTab('viewer');
     logAction('SEARCH', 'عرض مشروع محدد', `كود: ${project.id} | اسم: ${project.name}`);
   };
@@ -114,7 +121,7 @@ function AppContent() {
       
       {/* Global Anti-DevTools, Anti-Copy & Anti-Leak Watermark Protection */}
       <WatermarkGuard
-        visitor={visitorInfo}
+        visitor={watermarkVisitor}
         enableWatermark={activeTab === 'viewer' || activeTab === 'coach'}
         enableProtection={true}
       />
@@ -176,6 +183,7 @@ function AppContent() {
           <ProjectViewer
             projectId={selectedProjectId}
             visitor={visitorInfo}
+            accessToken={projectAccessToken}
             onBack={() => handleTabChange('home')}
           />
         )}
@@ -225,4 +233,3 @@ export default function App() {
     </LoggerProvider>
   );
 }
-

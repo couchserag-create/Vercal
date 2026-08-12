@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { getUserById } from '../db.ts';
+import { securityConfig } from '../config.ts';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fitbrilliance_secure_jwt_secret_2026_key';
+const JWT_SECRET = securityConfig.jwtSecret;
 
 export interface AuthRequest extends Request {
   user?: {
