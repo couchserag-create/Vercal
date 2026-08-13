@@ -1,20 +1,6 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/eaca66d3-df15-4f9d-939e-c99f1f693cd8
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Copy `.env.example` to `.env` and set strong local development values.
-3. Run the app:
-   `npm run dev`
+أهلاً بك. مرحباً بك في شرح شامل لمنظومة FitBrilliance SecuFlow، مصمم ليعطيك صورة كاملة ودقيقة عن المشروع وكأنك تتعرف عليه لأول مرة:
+1. الهدف الأساسي من المنظومة (Goal & Purpose)
+منظومة FitBrilliance SecuFlow (بإشراف الكوتش سراج الدين) هي منصة رقمية واستراتيجية متكاملة تهدف إلى:
+إعادة هندسة المسار: تحويل التشتت الذاتي أو المهني أو المؤسسي إلى ريادة ميدانية ملموسة ومقاسة خلال 90 يوماً.
+توفير بيئة محمية للتقارير والدراسات: استعراض المشاريع وخبرات التحليل الفني والمالي للعملاء والمؤسسات تحت بروتوكولات حماية وتشفير مشددة تُمنع معها التسريبات أو الوصول غير المصرح به.
+إرساء الدستور التشغيلي: تقديم مرجع قيمي وفلسفي متمثل في "كتيب الكوتش ودستور FitBrilliance" للالتزام بأعلى معايير الجودة والإنتاجية.
